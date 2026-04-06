@@ -28,3 +28,6 @@ steps:
 
 images:
   - 'asia-south1-docker.pkg.dev/cloud-run-490411/my-app-repo/my-app-image'
+
+options:
+ logging: CLOUD_LOGGING_ONLY
