@@ -4,7 +4,7 @@ steps:
     args: [
       'build',
       '-t',
-      'asia-south1-docker.pkg.dev/cloud-run-490411/my-app-repo/my-app-image',
+      'asia-south1-docker.pkg.dev/cloud-run-490411/cloud-build-demo/my-app-image',
       '-f',
       'Cloud-build/Dockerfile',
       'Cloud-build'
@@ -14,7 +14,7 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args: [
       'push',
-      'asia-south1-docker.pkg.dev/cloud-run-490411/my-app-repo/my-app-image'
+      'asia-south1-docker.pkg.dev/cloud-run-490411/cloud-build-demo/my-app-image'
     ]
 
   # Step 3: Deploy to Cloud Run
@@ -22,14 +22,14 @@ steps:
     entrypoint: gcloud
     args: [
       'run', 'deploy', 'my-flask-app',
-      '--image', 'asia-south1-docker.pkg.dev/cloud-run-490411/my-app-repo/my-app-image',
+      '--image', 'asia-south1-docker.pkg.dev/cloud-run-490411/cloud-build-demo/my-app-image',
       '--region', 'asia-south1',
       '--platform', 'managed',
       '--allow-unauthenticated'
     ]
 
 images:
-  - 'asia-south1-docker.pkg.dev/cloud-run-490411/my-app-repo/my-app-image'
+  - 'asia-south1-docker.pkg.dev/cloud-run-490411/cloud-build-demo/my-app-image'
 
 options:
  logging: CLOUD_LOGGING_ONLY
