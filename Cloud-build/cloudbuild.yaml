@@ -5,7 +5,9 @@ steps:
       'build',
       '-t',
       'asia-south1-docker.pkg.dev/cloud-run-490411/my-app-repo/my-app-image',
-      '.'
+      '-f',
+      'Cloud-build/Dockerfile',
+      'Cloud-build'
     ]
 
   # Step 2: Push Image to Artifact Registry
