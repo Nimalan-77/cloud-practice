@@ -43,7 +43,7 @@ jobs:
         run: |
           # We create a unique tag using the GitHub commit SHA
           IMAGE_TAG=${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-          docker build -t $IMAGE_TAG .
+          docker build -t $IMAGE_TAG ./github-actions-with-multi-stage
           docker push $IMAGE_TAG
           # Save the image tag to use in the next steps
           echo "FULL_IMAGE_NAME=$IMAGE_TAG" >> $GITHUB_ENV
@@ -57,9 +57,9 @@ jobs:
       - name: Deploy to Staging
         run: |
           # Use 'sed' to replace the placeholder IMAGE_NAME in the yaml file with the real image tag
-          sed -i "s|IMAGE_NAME|${{ env.FULL_IMAGE_NAME }}|g" k8s/staging/deployment.yaml
-          kubectl apply -f k8s/staging/deployment.yaml
-          kubectl apply -f k8s/staging/service.yaml
+          sed -i "s|IMAGE_NAME|${{ env.FULL_IMAGE_NAME }}|g" github-actions-with-multi-stage/k8s-manifests/staging/deployment.yaml
+          kubectl apply -f github-actions-with-multi-stage/k8s-manifests/staging/deployment.yaml
+          kubectl apply -f github-actions-with-multi-stage/k8s-manifests/staging/service.yaml
 
   # JOB 2: Deploy to Production (Depends on Staging success)
   deploy-prod:
@@ -90,6 +90,6 @@ jobs:
           # We reuse the same image tag from the build job
           # Since we can't easily share env variables between jobs, we reconstruct the tag
           IMAGE_TAG=${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-          sed -i "s|IMAGE_NAME|$IMAGE_TAG|g" k8s/prod/deployment.yaml
-          kubectl apply -f k8s/prod/deployment.yaml
-          kubectl apply -f k8s/prod/service.yaml
+          sed -i "s|IMAGE_NAME|$IMAGE_TAG|g" github-actions-with-multi-stage/k8s-manifests/prod/deployment.yaml
+          kubectl apply -f github-actions-with-multi-stage/k8s-manifests/prod/deployment.yaml
+          kubectl apply -f github-actions-with-multi-stage/k8s-manifests/prod/service.yaml
