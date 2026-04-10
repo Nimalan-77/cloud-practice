@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app-staging
+  namespace: staging
+spec:
+  replicas: 1 # Lower resources for staging
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      containers:
+      - name: my-app
+        image: IMAGE_NAME #placeholder
+        ports:
+        - containerPort: 8080
