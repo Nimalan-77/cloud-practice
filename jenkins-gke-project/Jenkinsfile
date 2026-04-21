@@ -13,22 +13,24 @@ pipeline {
                 checkout scm
             }
         }
-        stage('Build Docker Image') {
+        stage('Build and Deploy') {
             steps {
-                sh "docker build -t ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:${IMAGE_TAG} ."
-            }
-        }
-        stage('Push to Artifact Registry') {
-            steps {
-                // This is where the WIF magic happens
-                sh "gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet"
-                sh "docker push ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:${IMAGE_TAG}"
-            }
-        }
-        stage('Deploy to GKE') {
-            steps {
-                sh "sed -i 's|IMAGE_PLACEHOLDER|${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:${IMAGE_TAG}|g' k8s/deployment.yaml"
-                sh "kubectl apply -f k8s/deployment.yaml"
+                // This tells Jenkins: "Go into this folder and run everything inside the brackets"
+                dir('jenkins-gke-project') {
+                    
+                    script {
+                        echo "Building Docker Image..."
+                        sh "docker build -t ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:${IMAGE_TAG} ."
+                        
+                        echo "Pushing to Artifact Registry..."
+                        sh "gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet"
+                        sh "docker push ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:${IMAGE_TAG}"
+                        
+                        echo "Deploying to GKE..."
+                        sh "sed -i 's|IMAGE_PLACEHOLDER|${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:${IMAGE_TAG}|g' k8s/deployment.yaml"
+                        sh "kubectl apply -f k8s/deployment.yaml"
+                    }
+                }
             }
         }
     }
