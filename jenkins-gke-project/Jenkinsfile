@@ -6,6 +6,7 @@ pipeline {
         REPO_NAME = 'gke-repo'
         IMAGE_NAME = 'flask-app'
         IMAGE_TAG = "${env.BUILD_NUMBER}"
+        CLUSTER_NAME = 'jenkins-cluster' // <--- Make sure this matches your GKE cluster name!
     }
     stages {
         stage('Checkout') {
@@ -15,9 +16,7 @@ pipeline {
         }
         stage('Build and Deploy') {
             steps {
-                // This tells Jenkins: "Go into this folder and run everything inside the brackets"
                 dir('jenkins-gke-project') {
-                    
                     script {
                         echo "Building Docker Image..."
                         sh "docker build -t ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:${IMAGE_TAG} ."
@@ -25,6 +24,10 @@ pipeline {
                         echo "Pushing to Artifact Registry..."
                         sh "gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet"
                         sh "docker push ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:${IMAGE_TAG}"
+                        
+                        echo "GKE Handshake: Getting Cluster Credentials..."
+                        
+                        sh "gcloud container clusters get-credentials ${CLUSTER_NAME} --region ${REGION} --project ${PROJECT_ID}"
                         
                         echo "Deploying to GKE..."
                         sh "sed -i 's|IMAGE_PLACEHOLDER|${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:${IMAGE_TAG}|g' k8s/deployment.yaml"
