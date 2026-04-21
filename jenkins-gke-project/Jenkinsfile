@@ -1,12 +1,13 @@
 pipeline {
     agent any
     environment {
-        PROJECT_ID = 'cloud-run-490411' 
-        REGION = 'asia-south1'
-        REPO_NAME = 'gke-repo'
-        IMAGE_NAME = 'flask-app'
-        IMAGE_TAG = "${env.BUILD_NUMBER}"
-        CLUSTER_NAME = 'jenkins-cluster' // <--- Make sure this matches your GKE cluster name!
+        PROJECT_ID   = 'cloud-run-490411'
+        REGION       = 'asia-south1'
+        REPO_NAME    = 'gke-repo'
+        IMAGE_NAME   = 'flask-app'
+        IMAGE_TAG    = "${env.BUILD_NUMBER}-${GIT_COMMIT.take(7)}"
+        CLUSTER_NAME = 'jenkins-cluster'
+        KUBE_NAMESPACE = 'default'
     }
     stages {
         stage('Checkout') {
@@ -14,25 +15,45 @@ pipeline {
                 checkout scm
             }
         }
-        stage('Build and Deploy') {
+        stage('Build Docker Image') {
             steps {
                 dir('jenkins-gke-project') {
-                    script {
-                        echo "Building Docker Image..."
-                        sh "docker build -t ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:${IMAGE_TAG} ."
-                        
-                        echo "Pushing to Artifact Registry..."
-                        sh "gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet"
-                        sh "docker push ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:${IMAGE_TAG}"
-                        
-                        echo "GKE Handshake: Getting Cluster Credentials..."
-                        
-                        sh "gcloud container clusters get-credentials ${CLUSTER_NAME} --region ${REGION} --project ${PROJECT_ID}"
-                        
-                        echo "Deploying to GKE..."
-                        sh "sed -i 's|IMAGE_PLACEHOLDER|${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:${IMAGE_TAG}|g' k8s/deployment.yaml"
-                        sh "kubectl apply -f k8s/deployment.yaml"
-                    }
+                    sh """
+                        set -e
+                        echo "Building Docker image..."
+                        docker build -t ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:${IMAGE_TAG} .
+                        echo "Authenticating Docker to Artifact Registry..."
+                        gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
+                        echo "Pushing Docker image..."
+                        docker push ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:${IMAGE_TAG}
+                    """
+                }
+            }
+        }
+        stage('Setup GKE Credentials') {
+            steps {
+                sh """
+                    set -e
+                    echo "Installing gke-gcloud-auth-plugin if missing..."
+                    if ! command -v gke-gcloud-auth-plugin >/dev/null 2>&1; then
+                        gcloud components install gke-gcloud-auth-plugin -q
+                    fi
+                    echo "Fetching cluster credentials..."
+                    gcloud container clusters get-credentials ${CLUSTER_NAME} --region ${REGION} --project ${PROJECT_ID} --quiet
+                """
+            }
+        }
+        stage('Deploy to GKE') {
+            steps {
+                dir('jenkins-gke-project') {
+                    sh """
+                        set -e
+                        echo "Validating deployment manifest..."
+                        sed 's|IMAGE_PLACEHOLDER|${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:${IMAGE_TAG}|g' k8s/deployment.yaml > k8s/deployment.tmp.yaml
+                        kubectl apply --dry-run=client -f k8s/deployment.tmp.yaml
+                        echo "Applying deployment to cluster..."
+                        kubectl apply -f k8s/deployment.tmp.yaml -n ${KUBE_NAMESPACE}
+                    """
                 }
             }
         }
