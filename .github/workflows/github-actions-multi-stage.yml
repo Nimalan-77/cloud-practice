@@ -6,7 +6,7 @@ on:
       - main  # Trigger this workflow whenever code is pushed to the main branch
 
 env:
-  # We use the secrets you created in the previous step
+  # We use the secrets created in github
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   PROJECT_NUMBER: ${{ secrets.GCP_PROJECT_NUMBER }}
   SA_EMAIL: ${{ secrets.GCP_SA_EMAIL }}
@@ -43,7 +43,7 @@ jobs:
         run: |
           # We create a unique tag using the GitHub commit SHA
           IMAGE_TAG=${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-          docker build -t $IMAGE_TAG ./github-actions-with-multi-stage
+          docker build -t $IMAGE_TAG ./github-actions-with-multi-stage   #should change the path according to your architecture
           docker push $IMAGE_TAG
           # Save the image tag to use in the next steps
           echo "FULL_IMAGE_NAME=$IMAGE_TAG" >> $GITHUB_ENV
@@ -58,8 +58,8 @@ jobs:
         run: |
           # Use 'sed' to replace the placeholder IMAGE_NAME in the yaml file with the real image tag
           sed -i "s|IMAGE_NAME|${{ env.FULL_IMAGE_NAME }}|g" github-actions-with-multi-stage/k8s-manifests/staging/deployment.yaml
-          kubectl apply -f github-actions-with-multi-stage/k8s-manifests/staging/deployment.yaml
-          kubectl apply -f github-actions-with-multi-stage/k8s-manifests/staging/service.yaml
+          kubectl apply -f github-actions-with-multi-stage/k8s-manifests/staging/deployment.yaml   # mention the folder path as per your repo
+          kubectl apply -f github-actions-with-multi-stage/k8s-manifests/staging/service.yaml      # mention the folder path as per your repo
 
   # JOB 2: Deploy to Production (Depends on Staging success)
   deploy-prod:
@@ -91,5 +91,5 @@ jobs:
           # Since we can't easily share env variables between jobs, we reconstruct the tag
           IMAGE_TAG=${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           sed -i "s|IMAGE_NAME|$IMAGE_TAG|g" github-actions-with-multi-stage/k8s-manifests/prod/deployment.yaml
-          kubectl apply -f github-actions-with-multi-stage/k8s-manifests/prod/deployment.yaml
-          kubectl apply -f github-actions-with-multi-stage/k8s-manifests/prod/service.yaml
+          kubectl apply -f github-actions-with-multi-stage/k8s-manifests/prod/deployment.yaml       # mention the folder path as per your repo
+          kubectl apply -f github-actions-with-multi-stage/k8s-manifests/prod/service.yaml          # mention the folder path as per your repo
