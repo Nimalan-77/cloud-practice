@@ -1,9 +1,9 @@
 pipeline {
     agent any
     environment {
-        PROJECT_ID = 'YOUR_GCP_PROJECT_ID' // We will fill this later
-        REGION = 'us-central1'
-        REPO_NAME = 'jenkins-repo'
+        PROJECT_ID = 'cloud-run-490411' 
+        REGION = 'asia-south1'
+        REPO_NAME = 'gke-repo'
         IMAGE_NAME = 'flask-app'
         IMAGE_TAG = "${env.BUILD_NUMBER}"
     }
