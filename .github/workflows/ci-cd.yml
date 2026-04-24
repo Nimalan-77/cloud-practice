@@ -24,7 +24,7 @@ jobs:
         name: 'Authenticate to Google Cloud'
         uses: 'google-github-actions/auth@v2'
         with:
-          workload_identity_provider: 'projects/640095824150/locations/global/workloadIdentityPools/github-pool-for-argocd/providers/github-provider'
+          workload_identity_provider: 'projects/640095824150/locations/global/workloadIdentityPools/github-pool-for-argocd/providers/github-pool-for-argocd'
           service_account: 'github-deployer@cloud-run-490411.iam.gserviceaccount.com'
 
       # 2. Configure Docker to use Artifact Registry
