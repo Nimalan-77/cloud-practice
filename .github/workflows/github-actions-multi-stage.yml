@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main  # Trigger this workflow whenever code is pushed to the main branch
+    paths:
+      - 'github-actions-with-multi-stage/app**' # ONLY trigger if app code changes
 
 env:
   # We use the secrets created in github
