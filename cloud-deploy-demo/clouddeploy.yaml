@@ -1,0 +1,17 @@
+apiVersion: deploy.cloud.google.com/v1
+kind: DeliveryPipeline
+metadata:
+  name: gke-demo-pipeline
+description: "My deployment pipeline to GKE"
+serialPipeline:
+  stages:
+  - targetId: gke-prod-cluster
+---
+apiVersion: deploy.cloud.google.com/v1
+kind: Target
+metadata:
+  name: gke-prod-cluster
+description: "Our Autopilot Cluster"
+gke:
+  # Replace YOUR_PROJECT_ID,region and cluster name below
+  cluster: projects/cloud-run-490411/locations/asia-south1/clusters/cloud-deploy-demo

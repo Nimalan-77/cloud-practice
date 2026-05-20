@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloud-deploy-demo-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cloud-deploy-demo
+  template:
+    metadata:
+      labels:
+        app: cloud-deploy-demo
+    spec:
+      containers:
+      - name: web-app
+        # This is a placeholder! Cloud Deploy will automatically replace it with the real image URL later.
+        image: my-app-image 
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            cpu: "250m"
+            memory: "512Mi"
+          limits:
+            cpu: "250m"
+            memory: "512Mi"

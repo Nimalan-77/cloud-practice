@@ -1,0 +1,29 @@
+steps:
+  # 1. Build the Docker Image
+  - name: 'gcr.io/cloud-builders/docker'
+    dir: 'cloud-deploy-demo' # This triggers the cloud build only if there are any changes in the mentioned folder
+    args: 
+      - 'build'
+      - '-t'
+      - 'asia-south1-docker.pkg.dev/$PROJECT_ID/gke-repo/hello-app:$COMMIT_SHA'
+      - '.'
+
+  # 2. Push the Docker Image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    dir: 'cloud-deploy-demo'
+    dir: 'cloud-deploy-demo'
+    args: 
+      - 'push'
+      - 'asia-south1-docker.pkg.dev/$PROJECT_ID/gke-repo/hello-app:$COMMIT_SHA'
+
+  # 3. Create a Release in Cloud Deploy
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'deploy'
+      - 'releases'
+      - 'create'
+      - 'release-$COMMIT_SHA'
+      - '--delivery-pipeline=gke-demo-pipeline'
+      - '--region=asia-south1'
+      - '--images=my-app-image=asia-south1-docker.pkg.dev/$PROJECT_ID/gke-repo/hello-app:$COMMIT_SHA'

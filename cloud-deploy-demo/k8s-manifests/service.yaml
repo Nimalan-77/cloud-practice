@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: cloud-deploy-demo-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: cloud-deploy-demo
+  ports:
+    - protocol: TCP
+      port: 80         # The port users will hit on the internet
+      targetPort: 8080 # The port our Node.js app is listening on
