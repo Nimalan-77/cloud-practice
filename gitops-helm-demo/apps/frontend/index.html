@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head><title>GitOps App</title></head>
+<body>
+    <h1>Hello from the Frontend!</h1>
+    <div id="api-data">Loading from backend...</div>
+    <script>
+        fetch('/api/data')
+            .then(response => response.text())
+            .then(data => document.getElementById('api-data').innerText = data)
+            .catch(err => document.getElementById('api-data').innerText = 'Error connecting to backend');
+    </script>
+</body>
+</html>
