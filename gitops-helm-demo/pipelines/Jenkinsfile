@@ -1,0 +1,60 @@
+pipeline {
+    agent any
+
+    environment {
+        // Define project variables
+        PROJECT_ID = 'cloud-run-490411'
+        REGION     = 'asia-south1'
+        REPO_NAME  = 'gke-repo'
+        
+        // This creates a unique tag using the Git Commit Hash
+        IMAGE_TAG  = "${env.GIT_COMMIT.take(7)}"
+        
+        // Full paths to the images in Artifact Registry
+        FRONTEND_IMAGE = "${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/frontend:${IMAGE_TAG}"
+        BACKEND_IMAGE  = "${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/backend:${IMAGE_TAG}"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                // Jenkins handles this automatically if using a Git plugin, 
+                // but we explicitly acknowledge it here.
+                checkout scm
+            }
+        }
+
+        stage('Build & Push Frontend') {
+            steps {
+                script {
+                    echo "Building Frontend Image: ${FRONTEND_IMAGE}"
+                    // Build the image from the apps/frontend folder
+                    sh "docker build -t ${FRONTEND_IMAGE} ./apps/frontend"
+                    // Push to Artifact Registry
+                    sh "docker push ${FRONTEND_IMAGE}"
+                }
+            }
+        }
+
+        stage('Build & Push Backend') {
+            steps {
+                script {
+                    echo "Building Backend Image: ${BACKEND_IMAGE}"
+                    // Build the image from the apps/backend folder
+                    sh "docker build -t ${BACKEND_IMAGE} ./apps/backend"
+                    // Push to Artifact Registry
+                    sh "docker push ${BACKEND_IMAGE}"
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Successfully built and pushed all images: ${IMAGE_TAG}"
+        }
+        failure {
+            echo "Pipeline failed. Check the logs."
+        }
+    }
+}
