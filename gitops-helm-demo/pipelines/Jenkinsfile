@@ -2,11 +2,15 @@ pipeline {
     agent any
 
     environment {
+        // Define project variables
         PROJECT_ID = 'cloud-run-490411'
         REGION     = 'asia-south1'
         REPO_NAME  = 'gke-repo'
+        
+        // This creates a unique tag using the Git Commit Hash
         IMAGE_TAG  = "${env.GIT_COMMIT.take(7)}"
         
+        // Full paths to the images in Artifact Registry
         FRONTEND_IMAGE = "${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/frontend:${IMAGE_TAG}"
         BACKEND_IMAGE  = "${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/backend:${IMAGE_TAG}"
     }
@@ -14,6 +18,8 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
+                // Jenkins handles this automatically if using a Git plugin, 
+                // but we explicitly acknowledge it here.
                 checkout scm
             }
         }
@@ -22,11 +28,10 @@ pipeline {
             steps {
                 script {
                     echo "Building Frontend Image: ${FRONTEND_IMAGE}"
-                    // We move INTO the folder first, then build
-                    dir('gitops-helm-demo/apps/frontend') {
-                        sh "docker build -t ${FRONTEND_IMAGE} ."
-                        sh "docker push ${FRONTEND_IMAGE}"
-                    }
+                    // Build the image from the apps/frontend folder
+                    sh "docker build -t ${FRONTEND_IMAGE} gitops-helm-demo/apps/frontend"
+                    // Push to Artifact Registry
+                    sh "docker push ${FRONTEND_IMAGE}"
                 }
             }
         }
@@ -35,11 +40,10 @@ pipeline {
             steps {
                 script {
                     echo "Building Backend Image: ${BACKEND_IMAGE}"
-                    // We move INTO the folder first, then build
-                    dir('gitops-helm-demo/apps/backend') {
-                        sh "docker build -t ${BACKEND_IMAGE} ."
-                        sh "docker push ${BACKEND_IMAGE}"
-                    }
+                    // Build the image from the apps/backend folder
+                    sh "docker build -t ${BACKEND_IMAGE} gitops-helm-demo/apps/backend"
+                    // Push to Artifact Registry
+                    sh "docker push ${BACKEND_IMAGE}"
                 }
             }
         }
