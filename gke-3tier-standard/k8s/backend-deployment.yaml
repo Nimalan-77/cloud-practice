@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: three-tier
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      serviceAccountName: ksa-backend
+      containers:
+        - name: backend
+          image: asia-south1-docker.pkg.dev/cloud-run-490411/gke-repo/backend:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: PROJECT_ID
+              value: "cloud-run-490411" 
+            - name: DB_HOST
+              value: "10.3.128.3" # Private ip of the cloud SQL instance.
+            - name: DB_NAME
+              value: "appdb" # database name 
